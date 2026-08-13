@@ -268,13 +268,25 @@
   .dock-routes-inline{
     display:flex;
     align-items:center;
-    gap: 5px;
-    overflow: hidden;
+    gap: 6px;
+    overflow-x: auto;
     font-family:'JetBrains Mono', monospace;
     font-size: 10.5px;
     color: var(--muted);
   }
-  .dock-route-item{ white-space: nowrap; }
+  .dock-route-item{ 
+    white-space: nowrap; 
+    background: #eef1f6;
+    border: 1px solid #dcdfe6;
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .dock-route-item span.stops-count{
+    color: var(--cyan);
+    font-weight: 700;
+  }
 
   @media (max-width: 820px){
     .docks-wrap{ grid-template-columns: 1fr; }
@@ -511,7 +523,7 @@ function processRows(rows){
     target.count += 1;
     target.paquetes += paradasVal;
     target.routes.push({
-      id: colId !== -1 ? r[colId] : '',
+      id: colId !== -1 ? String(r[colId] ?? '').trim() : '',
       paradas: paradasVal
     });
   });
@@ -551,6 +563,15 @@ function renderHeader(info){
   }
 }
 
+function extractRouteNumber(id){
+  if(!id) return '';
+  const parts = id.split('-');
+  if(parts.length > 1){
+    return parts[parts.length - 1].trim();
+  }
+  return id;
+}
+
 function renderGrid(containerId, dockList, dockStats){
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -564,8 +585,12 @@ function renderGrid(containerId, dockList, dockStats){
 
     let routesHtml = '';
     if(stat.count > 0){
-      const routeIds = stat.routes.map(r => String(r.id || '').split(' - ')[0]).filter(Boolean);
-      routesHtml = `<div class="dock-routes-inline">${routeIds.map(id => `<span class="dock-route-item">${id}</span>`).join(' ')}</div>`;
+      const routeBadges = stat.routes.map(r => {
+        const routeNum = extractRouteNumber(r.id);
+        const routeName = routeNum ? `${letter}-${routeNum}` : letter;
+        return `<span class="dock-route-item">${routeName} (<span class="stops-count">${r.paradas}</span>)</span>`;
+      });
+      routesHtml = `<div class="dock-routes-inline">${routeBadges.join(' ')}</div>`;
     }
 
     el.innerHTML = `
