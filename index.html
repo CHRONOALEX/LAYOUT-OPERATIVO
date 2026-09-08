@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Layout Muelles — Control de Despacho</title>
 
-<!-- FAVICON: Cajita tipo paquete/paquetería para la pestaña de Chrome -->
+<!-- FAVICON -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f9d8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'></path><polyline points='3.27 6.96 12 12.01 20.73 6.96'></polyline><line x1='12' y1='22.08' x2='12' y2='12'></line><polyline points='7.5 4.21 16.5 9.41'></polyline></svg>">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Lexend:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -23,17 +24,17 @@
     --muted-dim: #a6aab5;
     --cyan: #0f9d8f;
 
-    --c0: #9ea3b0;    /* vacío */
+    --c0: #9ea3b0;
     --c0-bg: #f0f1f4;
-    --c1: #3b82f6;    /* 1 ruta - azul */
+    --c1: #3b82f6;
     --c1-bg: #3b82f61a;
-    --c2: #a855f7;    /* 2 rutas - morado */
+    --c2: #a855f7;
     --c2-bg: #a855f71a;
-    --c3: #ef4444;    /* 3 rutas - rojo */
+    --c3: #ef4444;
     --c3-bg: #ef44441a;
-    --c4: #f97316;    /* 4 rutas - naranja */
+    --c4: #f97316;
     --c4-bg: #f973161a;
-    --c5: #ec4899;    /* 5+ rutas - magenta */
+    --c5: #ec4899;
     --c5-bg: #ec48991a;
   }
 
@@ -45,19 +46,20 @@
     font-family: 'Lexend', 'Inter', sans-serif;
     min-height: 100vh;
     padding: 16px;
+    padding-bottom: 80px;
   }
 
-  .wrap{ max-width: 1280px; margin: 0 auto; }
+  .wrap{ max-width: 1400px; margin: 0 auto; }
 
   .board{ display:none; }
   .board.active{ display:block; }
 
   /* ---------- DROPZONE INICIAL ---------- */
   .dropzone{
-    border: 1px dashed #c7cad2;
+    border: 2px dashed #c7cad2;
     border-radius: 12px;
     background: var(--panel-alt);
-    padding: 40px 20px;
+    padding: 50px 20px;
     text-align: center;
     cursor: pointer;
     transition: border-color .15s ease, background .15s ease;
@@ -68,7 +70,7 @@
   }
   .dropzone input{ display:none; }
   .dz-icon{
-    width: 40px; height: 40px; margin: 0 auto 12px;
+    width: 44px; height: 44px; margin: 0 auto 12px;
     border: 1.5px solid var(--muted-dim);
     border-radius: 10px;
     display:flex; align-items:center; justify-content:center;
@@ -81,8 +83,8 @@
   .dz-sub{ color: var(--muted); font-size: 12.5px; }
   .dz-sub b{ color: var(--text); font-weight: 500; }
   .dz-error{
-    margin-top: 12px; color: #d92d20; font-size: 12px; font-family:'JetBrains Mono',monospace;
-    display:none;
+    margin-top: 14px; color: #d92d20; font-size: 13px; font-weight: 500; font-family:'JetBrains Mono',monospace;
+    display:none; background: #fee2e2; padding: 8px 12px; border-radius: 6px; border: 1px solid #fca5a5;
   }
 
   /* ---------- RENGLÓN UNIFICADO DE HEADER Y TARJETAS ---------- */
@@ -94,7 +96,7 @@
     align-items: center;
   }
 
-  /* Base para todas las tarjetas tipo pill/badge */
+  /* CAJAS CENTRADAS HORIZONTAL Y VERTICALMENTE */
   .top-card{
     background: #f1f3f7;
     border: 1px solid #dcdfe6;
@@ -103,13 +105,15 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+    text-align: center;
     height: 42px;
   }
 
-  /* Título Brand */
   .card-brand{
     background: var(--panel);
     border-color: var(--line);
+    justify-content: center;
   }
   .brand{
     font-family:'Space Grotesk', sans-serif;
@@ -117,10 +121,10 @@
   }
   .brand span{ color: var(--cyan); }
 
-  /* Jornada Card */
   .card-jornada{
     border-color: #0f9d8f3a;
     background: #0f9d8f0d;
+    align-items: center;
   }
   .jornada-val{
     font-family:'JetBrains Mono', monospace;
@@ -128,13 +132,19 @@
     white-space: nowrap;
   }
 
-  /* Tarjetas de Métricas */
   .stat-card{
     flex: 1;
-    min-width: 110px;
+    min-width: 100px;
     background: #f4f5f8;
     border-color: #e0e3eb;
     transition: all .15s ease;
+  }
+  .stat-card.highlight {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+  .stat-card.highlight .stat-value {
+    color: #166534;
   }
   .stat-label{
     font-size: 9px; letter-spacing: 0.8px; color: var(--muted);
@@ -147,7 +157,6 @@
   }
   .stat-value small{ font-size: 10.5px; color: var(--muted); font-weight:400; }
 
-  /* Acciones (Cargar Viajes e Imprimir) a la misma altura */
   .card-action-group{
     display: flex;
     align-items: center;
@@ -158,6 +167,7 @@
   .upload-btn-card{
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     border: 1px solid #dcdfe6;
     border-radius: 8px;
@@ -174,10 +184,11 @@
   .upload-btn-card:hover{ border-color: var(--cyan); color: var(--cyan); background: #0f9d8f0d; }
   .upload-btn-card input{ display:none; }
 
-  .print-btn-card{
+  .print-btn-card, .report-btn-card{
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     background: #f1f3f7;
     border: 1px solid #dcdfe6;
     color: var(--text);
@@ -191,9 +202,28 @@
     transition: all .15s;
     white-space: nowrap;
   }
-  .print-btn-card:hover{ border-color: var(--cyan); color: var(--cyan); background: #0f9d8f0d; }
+  .print-btn-card:hover, .report-btn-card:hover{ border-color: var(--cyan); color: var(--cyan); background: #0f9d8f0d; }
 
-  /* ---------- LEYENDA (POR ENCIMA DE LAS COLUMNAS) ---------- */
+  .reset-btn-card{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #e4c6c6;
+    color: #b3423f;
+    font-family: 'Lexend', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 0 10px;
+    height: 42px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .reset-btn-card:hover{ background: #b3423f10; }
+
+  /* ---------- LEYENDA ---------- */
   .legend-top{
     margin-bottom: 10px;
     display:flex; flex-wrap:wrap; gap: 12px;
@@ -205,42 +235,61 @@
   .legend-item{ display:flex; align-items:center; gap:5px; }
   .legend-dot{ width:8px; height:8px; border-radius:2px; }
 
-  /* ---------- DOCK GRID (FORMATO TABLA 2 COLUMNAS) ---------- */
+  /* ---------- DOCK GRID ---------- */
   .docks-wrap{
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
+  .dock-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
   .dock-col-title{
     font-family:'Space Grotesk', sans-serif;
     font-size: 12px; font-weight:700; letter-spacing: 0.8px; color: var(--text);
-    margin-bottom: 6px;
-    display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; gap:6px; flex: 1;
   }
   .dock-col-title::after{
-    content:''; flex:1; height:1px; background: var(--line-soft);
+    content:''; flex:1; height:1px; background: var(--line-soft); margin-right: 8px;
   }
   
+  .btn-select-col {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-family: 'Lexend', sans-serif;
+    padding: 2px 8px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-select-col:hover { border-color: var(--cyan); color: var(--cyan); }
+
   .dock-grid{
     display:flex;
     flex-direction:column;
     gap: 3px;
   }
 
-  /* Fila estilo Tabla Ultra Compacta */
   .dock-row{
     display:flex;
     align-items:center;
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 5px;
-    padding: 3px 6px;
+    padding: 4px 10px;
     gap: 8px;
     font-size: 11.5px;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    user-select: none;
+    cursor: pointer;
   }
-  .dock-row.empty{ opacity:.45; background: var(--panel-alt); }
+  .dock-row.empty{ opacity:.55; background: var(--panel-alt); }
 
-  /* Recuadro Muelle - Total de Rutas */
   .dock-badge{
     font-family:'Space Grotesk', sans-serif;
     font-size: 11.5px; font-weight: 700;
@@ -252,19 +301,20 @@
     white-space: nowrap;
     min-width: 46px;
     text-align: center;
+    flex-shrink: 0;
   }
 
-  /* Métrica de Paquetes */
   .dock-metric{
     font-family:'JetBrains Mono', monospace;
     font-size: 11.5px; font-weight: 600; color: var(--text);
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .dock-empty-label{
     font-family:'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted-dim);
+    flex-shrink: 0;
   }
 
-  /* Rutas alineadas en la misma fila */
   .dock-routes-inline{
     display:flex;
     align-items:center;
@@ -273,7 +323,12 @@
     font-family:'JetBrains Mono', monospace;
     font-size: 10.5px;
     color: var(--muted);
+    flex: 1;
+    min-width: 0;
+    scrollbar-width: none;
   }
+  .dock-routes-inline::-webkit-scrollbar { display: none; }
+
   .dock-route-item{ 
     white-space: nowrap; 
     background: #eef1f6;
@@ -282,20 +337,104 @@
     border-radius: 4px;
     color: var(--text);
     font-weight: 600;
+    flex-shrink: 0;
   }
   .dock-route-item span.stops-count{
     color: var(--cyan);
     font-weight: 700;
   }
 
-  @media (max-width: 820px){
-    .docks-wrap{ grid-template-columns: 1fr; }
+  .dock-operator-wrapper {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 
-  /* ---------- IMPRESIÓN ---------- */
+  .dock-operator-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid transparent;
+  }
+
+  /* BARRA FLOTANTE DE ACCIONES PARA SELECCIÓN MULTIPLE */
+  .selection-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1e293b;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .selection-bar.active {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .sel-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #93c5fd;
+    white-space: nowrap;
+  }
+
+  .sel-select {
+    background: #334155;
+    color: #ffffff;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Lexend', sans-serif;
+    outline: none;
+    cursor: pointer;
+    max-width: 320px;
+  }
+  .sel-select:focus { border-color: #60a5fa; }
+  .sel-select option.op-busy {
+    font-weight: 700;
+    background-color: #064e3b;
+    color: #6ee7b7;
+  }
+
+  .sel-btn-clear {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .sel-btn-clear:hover { color: #f87171; }
+
+  @media (max-width: 820px){
+    .docks-wrap{ grid-template-columns: 1fr; }
+    .dock-operator-pill { max-width: 120px; }
+    .selection-bar { width: 92%; justify-content: space-between; padding: 10px 14px; }
+  }
+
   @media print{
     body{ padding: 0; }
-    .card-action-group, .dropzone{ display:none !important; }
+    .card-action-group, .dropzone, .btn-select-col, .selection-bar { display:none !important; }
     .legend-top, .docks-wrap, .dock-row{ break-inside: avoid; }
   }
 </style>
@@ -315,21 +454,16 @@
 
   <div class="board" id="board">
 
-    <!-- RENGLÓN DE HEADER Y TARJETAS ALINEADAS EN LA MISMA HILERA -->
     <div class="top-row-grid">
-      
-      <!-- Título -->
       <div class="top-card card-brand">
         <div class="brand">Layout <span>Muelles</span></div>
       </div>
 
-      <!-- Jornada -->
       <div class="top-card card-jornada">
         <div class="stat-label">Jornada</div>
         <div class="jornada-val" id="jornadaTag">—</div>
       </div>
 
-      <!-- Métricas -->
       <div class="top-card stat-card">
         <div class="stat-label">Paquetes</div>
         <div class="stat-value" id="statPaquetes">0</div>
@@ -350,7 +484,11 @@
         <div class="stat-value" id="statMuelles">0 <small id="statMuellesTotal">/ 0</small></div>
       </div>
 
-      <!-- Acciones de Carga e Impresión -->
+      <div class="top-card stat-card highlight">
+        <div class="stat-label">Operadores</div>
+        <div class="stat-value" id="statOperadores">0</div>
+      </div>
+
       <div class="card-action-group">
         <label class="upload-btn-card">
           <input type="file" id="fileInputInline" accept=".xlsx,.xls,.csv">
@@ -358,11 +496,11 @@
           <span>Cargar Viajes</span>
         </label>
         <button class="print-btn-card" id="printBtn">Imprimir</button>
+        <button class="report-btn-card" id="reportBtn">Descargar Reporte Excel</button>
+        <button class="reset-btn-card" id="resetBtn" title="Borrar datos acumulados de jornadas">Reiniciar</button>
       </div>
-
     </div>
 
-    <!-- LEYENDA (POR ENCIMA DE LAS COLUMNAS DE MUELLES) -->
     <div class="legend-top">
       <span class="legend-title">Ocupación:</span>
       <div class="legend-item"><span class="legend-dot" style="background:#9ea3b0"></span>Vacío</div>
@@ -373,14 +511,19 @@
       <div class="legend-item"><span class="legend-dot" style="background:#ec4899"></span>5+ rutas</div>
     </div>
 
-    <!-- COLUMNAS EN FORMATO TABLA DE 2 COLUMNAS -->
     <div class="docks-wrap">
       <div>
-        <div class="dock-col-title">A - P</div>
+        <div class="dock-col-header">
+          <div class="dock-col-title">A - P</div>
+          <button class="btn-select-col" id="btnSelectLeft">Seleccionar Lado A-P</button>
+        </div>
         <div class="dock-grid" id="gridLeft"></div>
       </div>
       <div>
-        <div class="dock-col-title">AC - Q</div>
+        <div class="dock-col-header">
+          <div class="dock-col-title">AC - Q</div>
+          <button class="btn-select-col" id="btnSelectRight">Seleccionar Lado AC-Q</button>
+        </div>
         <div class="dock-grid" id="gridRight"></div>
       </div>
     </div>
@@ -389,29 +532,111 @@
 
 </div>
 
+<!-- BARRA FLOTANTE DE ACCIONES PARA SELECCIÓN MULTIPLE -->
+<div class="selection-bar" id="selectionBar">
+  <span class="sel-count" id="selCount">0 muelles seleccionados</span>
+  <select class="sel-select" id="bulkOperatorSelect">
+    <option value="" disabled selected>Asignar operador...</option>
+  </select>
+  <button class="sel-btn-clear" id="btnClearSelection">Cancelar</button>
+</div>
+
 <script>
+// ============================================================
+// OPERADORES Y PALETA DE COLORES
+// ============================================================
+const OPERADORES = [
+  'Sin Asignar', 'Alexis Segura', 'Angel Lopez', 'Antonio Serratos', 'David de la Rosa',
+  'Gerardo Elizondo', 'Guadalupe Rosales', 'Israel Elizondo', 'Jesus Lopez', 'Jesus Montes',
+  'Juan Rincon', 'Julian Guajardo', 'Karla Rivera', 'Maria Perez', 'Mario Aldape',
+  'Rebeca Rincon', 'Samuel Monreal', 'Sergio Mendoza', 'Silvana Peregrino'
+];
+
+const PALETA_DISTINTA = [
+  { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+  { bg: '#dcfce7', border: '#22c55e', text: '#166534' },
+  { bg: '#f3e8ff', border: '#a855f7', text: '#6b21a8' },
+  { bg: '#ffedd5', border: '#f97316', text: '#9a3412' },
+  { bg: '#ccfbf1', border: '#14b8a6', text: '#115e59' },
+  { bg: '#fce7f3', border: '#ec4899', text: '#9d174d' },
+  { bg: '#fef3c7', border: '#eab308', text: '#854d0e' },
+  { bg: '#e0e7ff', border: '#6366f1', text: '#3730a3' },
+  { bg: '#e0f2fe', border: '#06b6d4', text: '#075985' },
+  { bg: '#fae8ff', border: '#d946ef', text: '#86198f' },
+  { bg: '#ecfdf5', border: '#10b981', text: '#065f46' },
+  { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+  { bg: '#f5f5f4', border: '#78716c', text: '#292524' },
+  { bg: '#fff7ed', border: '#f97316', text: '#7c2d12' },
+  { bg: '#f0fdf4', border: '#4ade80', text: '#14532d' },
+  { bg: '#f1f5f9', border: '#64748b', text: '#0f172a' },
+  { bg: '#fdf4ff', border: '#e879f9', text: '#701a75' },
+  { bg: '#e0f7fa', border: '#26c6da', text: '#006064' }
+];
+
+const operatorColorMap = {};
+OPERADORES.forEach((name, idx) => {
+  if (name !== 'Sin Asignar') {
+    operatorColorMap[name] = PALETA_DISTINTA[(idx - 1) % PALETA_DISTINTA.length];
+  }
+});
+
+function getOperatorColors(name) {
+  if (!name || name === 'Sin Asignar') return null;
+  return operatorColorMap[name] || PALETA_DISTINTA[0];
+}
+
+// ============================================================
+// CONSTANTES Y ESTADO GLOBAL
+// ============================================================
 const LEFT_DOCKS  = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
 const RIGHT_DOCKS = ['AC','AB','AA','Z','Y','X','W','V','U','T','S','R','Q'];
 const ALL_DOCKS = [...LEFT_DOCKS, ...RIGHT_DOCKS];
 
-const COLOR_BY_COUNT = {
-  0: {c:'var(--c0)', bg:'var(--c0-bg)'},
-  1: {c:'var(--c1)', bg:'var(--c1-bg)'},
-  2: {c:'var(--c2)', bg:'var(--c2-bg)'},
-  3: {c:'var(--c3)', bg:'var(--c3-bg)'},
-  4: {c:'var(--c4)', bg:'var(--c4-bg)'},
-};
+let operadoresAsignados = {};
+ALL_DOCKS.forEach(d => operadoresAsignados[d] = 'Sin Asignar');
+
+let selectedDocks = new Set();
+
 function colorFor(n){
   if(n>=5) return {c:'var(--c5)', bg:'var(--c5-bg)'};
-  return COLOR_BY_COUNT[n] || COLOR_BY_COUNT[0];
+  const map = {
+    0: {c:'var(--c0)', bg:'var(--c0-bg)'},
+    1: {c:'var(--c1)', bg:'var(--c1-bg)'},
+    2: {c:'var(--c2)', bg:'var(--c2-bg)'},
+    3: {c:'var(--c3)', bg:'var(--c3-bg)'},
+    4: {c:'var(--c4)', bg:'var(--c4-bg)'}
+  };
+  return map[n] || map[0];
 }
 
+let dockStatsAccum = {};
+let jornadasAcumuladas = [];
+let totalPaquetesAcum = 0;
+let totalRutasAcum = 0;
+
+function newEmptyDockStats(){
+  const obj = {};
+  ALL_DOCKS.forEach(d => obj[d] = {count:0, paquetes:0, routesMap:{}});
+  return obj;
+}
+dockStatsAccum = newEmptyDockStats();
+
+// ============================================================
+// ELEMENTOS DOM
+// ============================================================
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const fileInputInline = document.getElementById('fileInputInline');
 const dzError = document.getElementById('dzError');
 const board = document.getElementById('board');
+const selectionBar = document.getElementById('selectionBar');
+const selCount = document.getElementById('selCount');
+const bulkOperatorSelect = document.getElementById('bulkOperatorSelect');
+const btnClearSelection = document.getElementById('btnClearSelection');
 
+// ============================================================
+// EVENTOS
+// ============================================================
 dropzone.addEventListener('click', () => fileInput.click());
 dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
@@ -419,25 +644,93 @@ dropzone.addEventListener('drop', e => {
   e.preventDefault(); dropzone.classList.remove('drag');
   if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
+
 fileInput.addEventListener('change', e => {
-  if(e.target.files.length) handleFile(e.target.files[0]);
+  if(e.target.files.length) { handleFile(e.target.files[0]); e.target.value = ''; }
 });
 fileInputInline.addEventListener('change', e => {
-  if(e.target.files.length) handleFile(e.target.files[0]);
+  if(e.target.files.length) { handleFile(e.target.files[0]); e.target.value = ''; }
 });
-document.getElementById('printBtn').addEventListener('click', () => window.print());
 
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+document.getElementById('reportBtn').addEventListener('click', () => downloadReportExcel());
+document.getElementById('resetBtn').addEventListener('click', () => resetAccumulated());
+
+document.getElementById('btnSelectLeft').addEventListener('click', () => toggleColumnSelection(LEFT_DOCKS));
+document.getElementById('btnSelectRight').addEventListener('click', () => toggleColumnSelection(RIGHT_DOCKS));
+
+btnClearSelection.addEventListener('click', () => {
+  selectedDocks.clear();
+  updateSelectionUI();
+});
+
+bulkOperatorSelect.addEventListener('change', (e) => {
+  const op = e.target.value;
+  if (!op) return;
+  selectedDocks.forEach(dock => {
+    operadoresAsignados[dock] = op;
+  });
+  selectedDocks.clear();
+  updateSelectionUI();
+  renderGrids();
+  updateHeaderStats();
+});
+
+function resetAccumulated(){
+  dockStatsAccum = newEmptyDockStats();
+  jornadasAcumuladas = [];
+  totalPaquetesAcum = 0;
+  totalRutasAcum = 0;
+  ALL_DOCKS.forEach(d => operadoresAsignados[d] = 'Sin Asignar');
+  selectedDocks.clear();
+  board.classList.remove('active');
+  dropzone.style.display = 'block';
+  dzError.style.display = 'none';
+  updateSelectionUI();
+}
+
+function showError(msg){
+  dzError.style.display = 'block';
+  dzError.textContent = msg;
+}
+
+// ============================================================
+// PROCESAMIENTO EXCEL / CSV
+// ============================================================
 function norm(s){
   return String(s == null ? '' : s).trim().toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
 
+function handleFile(file){
+  dzError.style.display = 'none';
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+      processRows(rows);
+    } catch(err) {
+      showError('Error al leer el archivo. Asegúrate de que sea un archivo Excel (.xlsx, .xls) o CSV válido.');
+      console.error(err);
+    }
+  };
+  
+  reader.onerror = () => showError('Error de lectura del archivo.');
+  reader.readAsArrayBuffer(file);
+}
+
 function findHeaderRow(rows){
-  for(let i=0;i<Math.min(rows.length, 15);i++){
+  for(let i = 0; i < Math.min(rows.length, 25); i++){
+    if(!rows[i]) continue;
     const cells = rows[i].map(norm);
-    if(cells.some(c => c.includes('muelle'))) return i;
+    if(cells.some(c => c.includes('muelle') || c === 'dock')) return i;
   }
-  return 0;
+  return -1;
 }
 
 function findCol(headerCells, candidates){
@@ -452,157 +745,335 @@ function findCol(headerCells, candidates){
   return -1;
 }
 
-function handleFile(file){
-  dzError.style.display = 'none';
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try{
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, {type:'array'});
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
-      processRows(rows);
-    }catch(err){
-      showError('No se pudo leer el archivo. Verifica que sea un Excel (.xlsx) o CSV válido.');
-      console.error(err);
-    }
-  };
-  reader.onerror = () => showError('Error al leer el archivo.');
-  reader.readAsArrayBuffer(file);
-}
-
-function showError(msg){
-  dzError.style.display = 'block';
-  dzError.textContent = msg;
-  board.classList.remove('active');
-  dropzone.style.display = 'block';
-}
-
 function processRows(rows){
-  if(!rows || rows.length < 2){ showError('El archivo no tiene datos suficientes.'); return; }
-
-  const headerIdx = findHeaderRow(rows);
-  const headerCells = rows[headerIdx].map(norm);
-
-  const colMuelle = findCol(headerCells, ['muelle de salida','muelle']);
-  const colParadas = findCol(headerCells, ['paradas','# paradas']);
-  const colParadasAlt = findCol(headerCells, ['# paradas','paradas']);
-  const colJornada = findCol(headerCells, ['jornada']);
-  const colId = findCol(headerCells, ['id']);
-
-  if(colMuelle === -1){
-    showError('No se encontró la columna "Muelle de salida" en el archivo.');
+  if(!rows || rows.length === 0){
+    showError('El archivo está totalmente vacío.');
     return;
   }
 
-  const dataRows = rows.slice(headerIdx+1).filter(r => r && r.some(c => String(c).trim() !== ''));
+  const headerIdx = findHeaderRow(rows);
+  if(headerIdx === -1){
+    showError('No se encontró una columna válida de "Muelle" en las primeras filas del archivo.');
+    return;
+  }
 
-  const dockStats = {};
-  ALL_DOCKS.forEach(d => dockStats[d] = {count:0, paquetes:0, routes:[]});
-  const extraDocks = {};
+  const headerCells = rows[headerIdx].map(norm);
 
-  let totalPaquetes = 0;
-  let totalRutas = 0;
-  const jornadas = new Set();
+  const colMuelle = findCol(headerCells, ['muelle de salida', 'muelle salida', 'muelle', 'dock']);
+  const colParadas = findCol(headerCells, ['paradas', '# paradas', 'num paradas', 'stops', 'paquetes']);
+  const colJornada = findCol(headerCells, ['jornada', 'turn', 'fecha']);
+  const colId = findCol(headerCells, ['id', 'id viaje', 'viaje', 'ruta', 'route']);
+
+  if(colMuelle === -1){
+    showError('No se pudo identificar la columna de "Muelle de Salida".');
+    return;
+  }
+
+  const dataRows = rows.slice(headerIdx + 1).filter(r => r && r.some(c => String(c).trim() !== ''));
+
+  if(dataRows.length === 0){
+    showError('El archivo no contiene filas de datos debajo del encabezado.');
+    return;
+  }
+
+  const jornadasArchivo = new Set();
+  let registrosProcesados = 0;
 
   dataRows.forEach(r => {
-    const muelleRaw = colMuelle !== -1 ? r[colMuelle] : '';
-    const muelle = String(muelleRaw == null ? '' : muelleRaw).trim().toUpperCase();
+    const muelleRaw = r[colMuelle];
+    let muelle = String(muelleRaw == null ? '' : muelleRaw).trim().toUpperCase();
+
     if(!muelle) return;
 
-    let paradasVal = colParadas !== -1 ? r[colParadas] : (colParadasAlt !== -1 ? r[colParadasAlt] : 0);
-    paradasVal = Number(paradasVal) || 0;
+    if(ALL_DOCKS.includes(muelle) || dockStatsAccum.hasOwnProperty(muelle)) {
+      let paradasVal = colParadas !== -1 ? r[colParadas] : 0;
+      paradasVal = parseInt(String(paradasVal).replace(/[^0-9]/g, ''), 10) || 0;
 
-    const jornadaVal = colJornada !== -1 ? String(r[colJornada] ?? '').trim() : '';
-    if(jornadaVal) jornadas.add(jornadaVal);
+      const jornadaVal = colJornada !== -1 ? String(r[colJornada] ?? '').trim() : '';
+      if(jornadaVal) jornadasArchivo.add(jornadaVal);
 
-    totalRutas += 1;
-    totalPaquetes += paradasVal;
+      totalRutasAcum += 1;
+      totalPaquetesAcum += paradasVal;
 
-    const target = dockStats[muelle] || (extraDocks[muelle] = extraDocks[muelle] || {count:0, paquetes:0, routes:[]});
-    target.count += 1;
-    target.paquetes += paradasVal;
-    target.routes.push({
-      id: colId !== -1 ? String(r[colId] ?? '').trim() : '',
-      paradas: paradasVal
-    });
+      if(!dockStatsAccum[muelle]){
+        dockStatsAccum[muelle] = {count:0, paquetes:0, routesMap:{}};
+      }
+      
+      const target = dockStatsAccum[muelle];
+      target.count += 1;
+      target.paquetes += paradasVal;
+
+      const routeId = colId !== -1 ? String(r[colId] ?? '').trim() : '';
+      const routeNum = extractRouteNumber(routeId);
+      const routeKey = routeNum ? `${muelle}-${routeNum}` : muelle;
+
+      if(!target.routesMap[routeKey]){
+        target.routesMap[routeKey] = {count:0, paquetes:0};
+      }
+      target.routesMap[routeKey].count += 1;
+      target.routesMap[routeKey].paquetes += paradasVal;
+
+      registrosProcesados++;
+    }
   });
 
-  const activeDocks = ALL_DOCKS.filter(d => dockStats[d].count > 0).length;
+  if(registrosProcesados === 0){
+    showError('No se encontraron registros coincidentes con los muelles configurados (A-P / AC-Q).');
+    return;
+  }
 
-  renderHeader({
-    totalPaquetes,
-    totalRutas,
-    totalParadas: totalPaquetes,
-    jornadas: Array.from(jornadas),
-    activeDocks,
-    totalDocks: ALL_DOCKS.length
+  jornadasArchivo.forEach(j => {
+    if(!jornadasAcumuladas.includes(j)) jornadasAcumuladas.push(j);
   });
 
-  renderGrid('gridLeft', LEFT_DOCKS, dockStats);
-  renderGrid('gridRight', RIGHT_DOCKS, dockStats);
+  renderHeader();
+  renderGrids();
 
   dropzone.style.display = 'none';
   board.classList.add('active');
 }
 
-function renderHeader(info){
-  document.getElementById('statPaquetes').textContent = info.totalPaquetes.toLocaleString('es-MX');
-  document.getElementById('statRutas').textContent = info.totalRutas.toLocaleString('es-MX');
-  document.getElementById('statParadas').textContent = info.totalParadas.toLocaleString('es-MX');
-  document.getElementById('statMuelles').firstChild.textContent = info.activeDocks + ' ';
-  document.getElementById('statMuellesTotal').textContent = '/ ' + info.totalDocks;
+function renderHeader(){
+  document.getElementById('statPaquetes').textContent = totalPaquetesAcum.toLocaleString('es-MX');
+  document.getElementById('statRutas').textContent = totalRutasAcum.toLocaleString('es-MX');
+  document.getElementById('statParadas').textContent = totalPaquetesAcum.toLocaleString('es-MX');
 
   const tag = document.getElementById('jornadaTag');
-  if(info.jornadas.length === 0){
-    tag.textContent = '—';
-  } else if(info.jornadas.length === 1){
-    tag.textContent = info.jornadas[0];
-  } else {
-    tag.textContent = info.jornadas.join(' · ');
-  }
+  if(jornadasAcumuladas.length === 0) tag.textContent = '—';
+  else if(jornadasAcumuladas.length === 1) tag.textContent = jornadasAcumuladas[0];
+  else tag.textContent = jornadasAcumuladas.join(' · ');
+
+  updateHeaderStats();
+}
+
+function updateHeaderStats() {
+  // Muelles con rutas asignadas en la carga
+  const activeDocks = ALL_DOCKS.filter(d => dockStatsAccum[d] && dockStatsAccum[d].count > 0);
+  
+  // De los muelles operados, cuántos tienen un operador asignado
+  const assignedActiveDocks = activeDocks.filter(d => operadoresAsignados[d] && operadoresAsignados[d] !== 'Sin Asignar').length;
+
+  document.getElementById('statMuelles').firstChild.textContent = assignedActiveDocks + ' ';
+  document.getElementById('statMuellesTotal').textContent = '/ ' + activeDocks.length;
+
+  const activeOperators = new Set(
+    Object.values(operadoresAsignados).filter(op => op && op !== 'Sin Asignar')
+  );
+  document.getElementById('statOperadores').textContent = activeOperators.size;
 }
 
 function extractRouteNumber(id){
   if(!id) return '';
   const parts = id.split('-');
-  if(parts.length > 1){
-    return parts[parts.length - 1].trim();
-  }
-  return id;
+  return parts.length > 1 ? parts[parts.length - 1].trim() : id;
 }
 
-function renderGrid(containerId, dockList, dockStats){
+function sortRouteKeys(routesMap){
+  return Object.keys(routesMap).sort((a, b) => {
+    const numA = parseFloat(a.split('-').pop());
+    const numB = parseFloat(b.split('-').pop());
+    if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+}
+
+// ============================================================
+// MANEJO DE DESPLEGABLE CON ESTADO Y SELECCIÓN
+// ============================================================
+function populateBulkDropdown() {
+  const counts = {};
+  Object.values(operadoresAsignados).forEach(op => {
+    if (op && op !== 'Sin Asignar') {
+      counts[op] = (counts[op] || 0) + 1;
+    }
+  });
+
+  bulkOperatorSelect.innerHTML = '<option value="" disabled selected>Asignar operador...</option>';
+
+  OPERADORES.forEach(op => {
+    const opt = document.createElement('option');
+    opt.value = op;
+    if (op === 'Sin Asignar') {
+      opt.textContent = op;
+    } else if (counts[op]) {
+      opt.textContent = `▶ ${op} — (${counts[op]} muelle${counts[op] > 1 ? 's' : ''})`;
+      opt.className = 'op-busy';
+    } else {
+      opt.textContent = op;
+    }
+    bulkOperatorSelect.appendChild(opt);
+  });
+}
+
+function toggleDockSelection(dock) {
+  if (selectedDocks.has(dock)) {
+    selectedDocks.delete(dock);
+  } else {
+    selectedDocks.add(dock);
+  }
+  updateSelectionUI();
+}
+
+function toggleColumnSelection(dockList) {
+  const allIn = dockList.every(d => selectedDocks.has(d));
+  if (allIn) {
+    dockList.forEach(d => selectedDocks.delete(d));
+  } else {
+    dockList.forEach(d => selectedDocks.add(d));
+  }
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  document.querySelectorAll('.dock-row').forEach(row => {
+    const d = row.dataset.dock;
+    const op = operadoresAsignados[d];
+    const opColors = getOperatorColors(op);
+
+    if (selectedDocks.has(d)) {
+      if (opColors) {
+        row.style.background = opColors.bg;
+        row.style.borderColor = opColors.border;
+        row.style.boxShadow = `0 0 0 1.5px ${opColors.border}`;
+      } else {
+        row.style.background = '#eff6ff';
+        row.style.borderColor = '#2563eb';
+        row.style.boxShadow = '0 0 0 1.5px #2563eb';
+      }
+    } else {
+      row.style.background = '';
+      row.style.borderColor = '';
+      row.style.boxShadow = '';
+    }
+  });
+
+  if (selectedDocks.size > 0) {
+    populateBulkDropdown();
+    selCount.textContent = `${selectedDocks.size} muelle${selectedDocks.size > 1 ? 's' : ''} seleccionado${selectedDocks.size > 1 ? 's' : ''}`;
+    selectionBar.classList.add('active');
+  } else {
+    selectionBar.classList.remove('active');
+  }
+}
+
+function renderGrids() {
+  renderGrid('gridLeft', LEFT_DOCKS);
+  renderGrid('gridRight', RIGHT_DOCKS);
+  updateSelectionUI();
+}
+
+function renderGrid(containerId, dockList) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+  
   dockList.forEach(letter => {
-    const stat = dockStats[letter];
+    const stat = dockStatsAccum[letter] || {count:0, paquetes:0, routesMap:{}};
     const color = colorFor(stat.count);
     const el = document.createElement('div');
     el.className = 'dock-row' + (stat.count === 0 ? ' empty' : '');
+    el.dataset.dock = letter;
     el.style.setProperty('--dock-color', color.c);
     el.style.setProperty('--dock-bg', color.bg);
 
     let routesHtml = '';
     if(stat.count > 0){
-      const routeBadges = stat.routes.map(r => {
-        const routeNum = extractRouteNumber(r.id);
-        const routeName = routeNum ? `${letter}-${routeNum}` : letter;
-        return `<span class="dock-route-item">${routeName} (<span class="stops-count">${r.paradas}</span>)</span>`;
+      const routeKeys = sortRouteKeys(stat.routesMap);
+      const routeBadges = routeKeys.map(routeKey => {
+        const r = stat.routesMap[routeKey];
+        const vecesTag = r.count > 1 ? `<span class="stops-count">×${r.count}</span> ` : '';
+        return `<span class="dock-route-item">${routeKey} ${vecesTag}(<span class="stops-count">${r.paquetes.toLocaleString('es-MX')}</span>)</span>`;
       });
       routesHtml = `<div class="dock-routes-inline">${routeBadges.join(' ')}</div>`;
+    } else {
+      routesHtml = `<div class="dock-routes-inline"><span class="dock-empty-label">sin asignar</span></div>`;
     }
 
-    el.innerHTML = `
+    const badgeHtml = `
       <div class="dock-badge">${letter} - ${stat.count}</div>
       ${stat.count > 0
-        ? `<div class="dock-metric">${stat.paquetes.toLocaleString('es-MX')} paquetes</div>`
+        ? `<div class="dock-metric">${stat.paquetes.toLocaleString('es-MX')} paq.</div>`
         : `<div class="dock-empty-label">sin asignar</div>`}
-      ${routesHtml}
     `;
+
+    const contentDiv = document.createElement('div');
+    contentDiv.style.display = 'flex';
+    contentDiv.style.alignItems = 'center';
+    contentDiv.style.gap = '8px';
+    contentDiv.style.flex = '1';
+    contentDiv.style.minWidth = '0';
+    contentDiv.innerHTML = badgeHtml + routesHtml;
+
+    const opWrapper = document.createElement('div');
+    opWrapper.className = 'dock-operator-wrapper';
+    
+    const assignedOp = operadoresAsignados[letter] || 'Sin Asignar';
+    if (assignedOp !== 'Sin Asignar') {
+      const opColors = getOperatorColors(assignedOp);
+      const pill = document.createElement('div');
+      pill.className = 'dock-operator-pill';
+      pill.style.backgroundColor = opColors.bg;
+      pill.style.borderColor = opColors.border;
+      pill.style.color = opColors.text;
+      pill.textContent = assignedOp;
+      pill.title = `Operador: ${assignedOp}`;
+      opWrapper.appendChild(pill);
+    }
+
+    el.appendChild(contentDiv);
+    el.appendChild(opWrapper);
+
+    el.addEventListener('click', () => {
+      toggleDockSelection(letter);
+    });
+
     container.appendChild(el);
   });
 }
+
+// ============================================================
+// REPORTE EXCEL
+// ============================================================
+function downloadReportExcel() {
+  const rows = [];
+  ALL_DOCKS.forEach(letter => {
+    const stat = dockStatsAccum[letter];
+    if(!stat || stat.count === 0) return;
+    sortRouteKeys(stat.routesMap).forEach(routeKey => {
+      const r = stat.routesMap[routeKey];
+      rows.push({
+        'Muelle': routeKey,
+        'Veces Operado': r.count,
+        'Total Paquetes': r.paquetes,
+        'Operador': operadoresAsignados[letter] || 'Sin Asignar'
+      });
+    });
+  });
+
+  if (rows.length === 0) {
+    alert('Primero carga un archivo con información de viajes.');
+    return;
+  }
+
+  const totalVeces = rows.reduce((sum, r) => sum + r['Veces Operado'], 0);
+  const totalPaquetes = rows.reduce((sum, r) => sum + r['Total Paquetes'], 0);
+  
+  rows.push({
+    'Muelle': 'TOTAL',
+    'Veces Operado': totalVeces,
+    'Total Paquetes': totalPaquetes,
+    'Operador': ''
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 25 }];
+
+  const title = jornadasAcumuladas.length ? `Reporte Muelles - ${jornadasAcumuladas.join(' · ')}` : 'Reporte Muelles';
+  XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+  XLSX.writeFile(wb, `${title}.xlsx`);
+}
+
+renderGrids();
 </script>
 </body>
 </html>
